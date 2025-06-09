@@ -1,0 +1,108 @@
+[data-testid=metric-container] {
+    box-shadow: 0 0 4px #686664;
+    padding: 10px;
+}
+
+.plot-container>div {
+    box-shadow: 0 0 2px #070505;
+    padding: 5px;
+    border-color: #000000;
+    
+   
+}
+
+div[data-testid="stExpander"] div[role="button"] p
+{
+    font-size: 1.2rem;
+    color:rgb(0, 0, 0);
+    border-color: #000000;
+    color-scheme: #000000;
+}
+
+.sidebar-content {
+    color: rgb(0, 0, 0);
+}
+
+[data-testid=stSidebar] {
+    color: rgb(0, 0, 0);
+     
+}
+
+.titulo-principal {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1f2937; 
+    text-align: center;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    margin-bottom: 40px;
+    border: 3px solid #294a70;  
+    padding: 20px 40px;      
+    border-radius: 12px;        
+    background-color: #f0f4f8; 
+    box-shadow: 0 4px 6px rgba(114, 180, 255, 0.3); 
+}
+
+
+.titulo-secundario {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 2rem;              
+    font-weight: 700;               
+    color: #0057b7;               
+    text-align: center;
+    margin: 50px 0;                 
+    letter-spacing: 1.5px;           
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15); 
+    border-bottom: 3px solid #0057b7; 
+    padding-bottom: 8px;           
+    transition: color 0.3s ease;   
+    text-transform: uppercase;  
+}
+
+.titulo-secundario:hover {
+    color: #007bff;                
+    cursor: default;               
+}
+
+.menu-lateral {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #214799;
+    margin-bottom: 8px;
+    margin-top: 20px;
+    letter-spacing: 0.5px;
+}
+
+.menu-lateral-grande {
+    font-size: 30px;
+    font-weight: bold;
+    color: #007ACC;
+    margin-top: 10px;
+    text-transform: uppercase;  
+}
+
+
+.styled-table {
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 14px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-width: 100%;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+.styled-table thead tr {
+    background-color: #009879;
+    color: #ffffff;
+    text-align: left;
+}
+.styled-table th, .styled-table td {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+}
+.styled-table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+.styled-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
