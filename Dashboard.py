@@ -3,6 +3,9 @@
 #! Importaciones principales para la app
 import streamlit as st  # type: ignore
 
+#! libreria de sql para operaciones de carga en python
+import pymysql
+from datetime import datetime
 #! Conector para Base de Datos MySQL
 import mysql.connector 
 import locale
@@ -386,11 +389,84 @@ try:
 except Exception as e:
     st.error(f"⚠ Error al generar el pronóstico: {e}")
 
+#NOTE: --------------------------------------------------------------- 
+
+import calendar
+
+def RealizarPredicción(forecast, idMoneda): 
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="ROOT",
+            database="dss_criptomonedas"
+        )
+        cursor = conn.cursor()
+
+        df_pred = forecast[['ds', 'yhat']].copy()
+        df_pred['ds'] = pd.to_datetime(df_pred['ds'])
+        df_pred = df_pred[df_pred['ds'] > datetime.now()].head(7).reset_index(drop=True)
+
+        for i, row in df_pred.iterrows():
+            fecha_dt = row['ds']
+            precio = round(row['yhat'], 4)
+
+            if i == 0:
+                variacion = 0.0
+            else:
+                precio_anterior = round(df_pred.loc[i - 1, 'yhat'], 4)
+                variacion = round(precio - precio_anterior, 4)
+
+            # Descomponer fecha y hora
+            fecha = fecha_dt.date()
+            hora = fecha_dt.time()
+            año = fecha_dt.year
+            mes = calendar.month_name[fecha_dt.month]
+            dia_semana = fecha_dt.weekday() + 1  # Lunes=1, Domingo=7
+            trimestre = (fecha_dt.month - 1) // 3 + 1
+            semestre = 1 if fecha_dt.month <= 6 else 2
+
+            # Asegurar idDiaSemana
+            cursor.execute("SELECT idDiaSemana FROM diasemana WHERE idDiaSemana = %s", (dia_semana,))
+            if not cursor.fetchone():
+                cursor.execute("INSERT INTO diasemana (idDiaSemana, Nombre) VALUES (%s, %s)", (dia_semana, fecha_dt.strftime('%A')))
+                conn.commit()
+
+            # Buscar o insertar en fecha
+            cursor.execute("SELECT idFecha FROM fecha WHERE Fecha = %s", (fecha,))
+            result_fecha = cursor.fetchone()
+            if result_fecha:
+                idFecha = result_fecha[0]
+            else:
+                cursor.execute("""
+                    INSERT INTO fecha (idDiaSemana, Fecha, Hora, Mes, Año, Semestre, Trimestre)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, (dia_semana, fecha, hora, mes, año, semestre, trimestre))
+                conn.commit()
+                idFecha = cursor.lastrowid
+
+            cursor.execute("""
+                INSERT INTO tendencia (idFecha, idMoneda, Variación, PrecioPromedio)
+                VALUES (%s, %s, %s, %s)
+            """, (idFecha, idMoneda, variacion, precio))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+    except mysql.connector.Error as e:
+        print(e)
+
+id_moneda = df[df["Moneda"] == filtro_moneda]["idMoneda"].iloc[0]
+RealizarPredicción(forecast, int(id_moneda))
+
+
+
 #NOTE: --------------------------------------------------------------- CLASIFICACIÓN DE INVERSIONES
-# ---------------- SECCIÓN 2: CLASIFICACIÓN DE INVERSIONES ----------------
+#! ---------------- SECCIÓN 2: CLASIFICACIÓN DE INVERSIONES ----------------
 st.subheader("📊 2. Clasificación de Inversión")
 st.markdown("<br>", unsafe_allow_html=True)
-# ---------------- GRAFICAS EN FILA ----------------
+#! ---------------- GRAFICAS EN FILA ----------------
 col_rangos, col_kmeans = st.columns(2)
 #NOTE: ---------------------------------------------------------------- RANGOS FIJOS
 with col_rangos:
@@ -408,6 +484,7 @@ with col_rangos:
         color_discrete_map={"Baja": "#a6cee3", "Media": "#1f78b4", "Alta": "#08306b"},
         template="plotly_white"
     )
+    
     fig_fijo.update_layout(yaxis_title="Cantidad de transacciones", xaxis_title="Categoría")
 
     st.plotly_chart(fig_fijo, use_container_width=True)
