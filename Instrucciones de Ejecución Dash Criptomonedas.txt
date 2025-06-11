@@ -1,0 +1,41 @@
+### Instrucciones de Ejecución Dashboard Criptomonedas ####
+
+1.- Realizar el clone del repositorio
+
+git clone https://github.com/AlexCL0320/DSS_CRIPTOMONEDAS.git
+
+2- Importación de la base de datos DB.sql
+
+#La base de datos se encuentra adjunta en el repositorio a nivel de la carpeta raíz
+
+
+3.- Edición del variable Usuario y ContraseñaBD dentro del archivo Dashboard.py
+ 
+#Se debe cambiar el valor de la variable usuario, por el nombre del usuario a utilizar, así como el valor de su contraseña
+#segun la configuración del equipo donde se crea
+
+
+
+4.-  Creación del entorno virtual
+
+python -m venv venv
+
+
+
+5.- Activación del entorno virtual
+
+.\venv\Scripts\activate
+
+
+
+6.- Instalación de las librerías a traves del archivo requeriments.txt
+
+pip install -r requirements.txt
+
+
+7.- Ejecución del archivo Dasboard.py
+
+streamlit run Dashboard.py
+
+
+ 
