@@ -332,7 +332,6 @@ if df.empty:
     st.warning("No se encontraron datos.")
     st.stop()
 
-# ---------------- FILTROS EN LA PRIMERA FILA ----------------
 #NOTE: ---------------------------------------------------------------- MENSAJE Y FILTROS PARA ANÁLISIS
 #! Mensaje de Moneda seleccionada y filtro de periodo para análisis de pronósitos
 col1, col2 = st.columns([3, 1])
@@ -415,22 +414,21 @@ def RealizarPredicción(forecast, idMoneda):
                 precio_anterior = round(df_pred.loc[i - 1, 'yhat'], 4)
                 variacion = round(precio - precio_anterior, 4)
 
-            # Descomponer fecha y hora
+            #! Descomponer fecha y hora
             fecha = fecha_dt.date()
             hora = fecha_dt.time()
             año = fecha_dt.year
             mes = calendar.month_name[fecha_dt.month]
-            dia_semana = fecha_dt.weekday() + 1  # Lunes=1, Domingo=7
+            dia_semana = fecha_dt.weekday() + 1 
             trimestre = (fecha_dt.month - 1) // 3 + 1
             semestre = 1 if fecha_dt.month <= 6 else 2
 
-            # Asegurar idDiaSemana
+            #! Asegurar idDiaSemana
             cursor.execute("SELECT idDiaSemana FROM diasemana WHERE idDiaSemana = %s", (dia_semana,))
             if not cursor.fetchone():
                 cursor.execute("INSERT INTO diasemana (idDiaSemana, Nombre) VALUES (%s, %s)", (dia_semana, fecha_dt.strftime('%A')))
                 conn.commit()
 
-            # Buscar o insertar en fecha
             cursor.execute("SELECT idFecha FROM fecha WHERE Fecha = %s", (fecha,))
             result_fecha = cursor.fetchone()
             if result_fecha:
