@@ -2,44 +2,41 @@
 #NOTE: ---------------------------------------------------------------- APARTADO DE IMPORTACIONES
 #! Importaciones principales para la app
 import streamlit as st  # type: ignore
-
 #! libreria de sql para operaciones de carga en python
-import pymysql
+import pymysql # type: ignore
 from datetime import datetime
 #! Conector para Base de Datos MySQL
 import mysql.connector 
 import locale
+import calendar
 locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252')
 #! Manejo de números muy grandes con formato legible
 from numerize.numerize import numerize  # type: ignore
-
 #! Manipulación y análisis de datos
 import pandas as pd  
-
 #! Visualización de datos con Plotly
 import plotly.express as px
 import plotly.graph_objects as go
-
 #! Algoritmos de clustering y preprocesamiento
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-
+from sklearn.cluster import KMeans # type: ignore
+from sklearn.preprocessing import StandardScaler # type: ignore
 #! Modelado de series temporales con Prophet
-from prophet import Prophet
-
+from prophet import Prophet # type: ignore
 #! Conexión a bases de datos mediante SQLAlchemy
-from sqlalchemy import create_engine
-
+from sqlalchemy import create_engine # type: ignore
 #! Personalización y visualización avanzada de tablas en Streamlit
-from st_aggrid import AgGrid, GridOptionsBuilder
+from st_aggrid import AgGrid, GridOptionsBuilder # type: ignore
+#! Se utiliza Type: ignore para ignorar la advertencia mostrada ()
 
+
+#NOTE: ---------------------------------------------------------------- Titulo Principal y Archivo CSS
 #! Obtenemos los iconos de https://streamlit-emoji-shortcodes-streamlit-app-gwckff.streamlit.app/
 st.set_page_config(page_title="ANÁLISIS DE CRIPTOS", page_icon="💲", layout="wide")
 
 #! Cargar los Estilos Definidos
 with open('style.css') as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
+    
 #! Título principal del dashboard
 st.markdown(
     '<h1 class="titulo-principal" style="margin-bottom:60px;">ANÁLISIS Y PREDICCIÓN DE CRIPTOMONEDAS</h1>',
@@ -60,12 +57,12 @@ def obtener_datos():
             password="ROOT",
             database="dss_criptomonedas"
         )
-
         #! Realizar consulta SQL
         query = """
         SELECT 
             m.Nombre AS Moneda,
             f.Fecha,
+            f.Hora,
             f.Año,
             f.Mes,
             f.Trimestre,
@@ -79,7 +76,6 @@ def obtener_datos():
         JOIN moneda m ON t.idMoneda = m.idMoneda
         JOIN fecha f ON t.idFecha = f.idFecha;
         """
-
         #! Ejecutar y leer resultado en DataFrame
         df = pd.read_sql(query, conn)
         conn.close()
@@ -89,7 +85,6 @@ def obtener_datos():
     except mysql.connector.Error as e:
         print(f"Error en la conexión o consulta: {e}")
         return pd.DataFrame() 
-    
 df = obtener_datos()
 
 #NOTE: ---------------------------------------------------------------- APARTADO DE FILTROS DEL USUARIO
@@ -102,27 +97,22 @@ if not df.empty:
     monedas = df["Moneda"].unique()
     años = df["Año"].unique()
     meses = df["Mes"].unique()
-
     #! Selección de Año Máximo y Minimo
     año_min = min(años)
     año_max = max(años)
-
     #! Filtros para que el usuario pueda seleccionar opciones en la barra lateral
     #! Título para seleccionar la moneda
     st.sidebar.markdown('<p class="menu-lateral">Seleccionar Moneda</p>', unsafe_allow_html=True)
     #! Selector desplegable para elegir la moneda
     filtro_moneda = st.sidebar.selectbox("Moneda", options=monedas, label_visibility="collapsed")
-
     #! Título para seleccionar el rango de años
     st.sidebar.markdown('<p class="menu-lateral">Seleccionar rango de años</p>', unsafe_allow_html=True)
     #! Slider para elegir el rango de años entre año_min y año_max
     filtro_año = st.sidebar.slider("Rango de años", año_min, año_max, (año_min, año_max), label_visibility="collapsed")
-
     #! Título para seleccionar los meses
     st.sidebar.markdown('<p class="menu-lateral">Seleccionar Mes</p>', unsafe_allow_html=True)
     #! Selector múltiple para elegir uno o varios meses, por defecto selecciona todos
     filtro_mes = st.sidebar.multiselect("Meses", options=meses, default=meses, label_visibility="collapsed")
-
     #! Aplicar filtros al DataFrame
     df_filtrado = df[
         (df["Moneda"] == filtro_moneda) &
@@ -130,9 +120,9 @@ if not df.empty:
         (df["Año"] <= filtro_año[1]) &
         (df["Mes"].isin(filtro_mes))
     ]
-
 else:
     st.sidebar.warning("No se pudieron cargar los datos de la base de datos.")
+
 #NOTE: ---------------------------------------------------------------- IAMGEN
 #! Imagen de la Parte Inferior del Sidebar
 st.sidebar.image("DATA/logo1.png", use_container_width=True)
@@ -145,10 +135,9 @@ def mostrar_Mensaje(titulo, valor, descripcion):
     with st.expander("❓ Ver descripción"):
         st.write(descripcion)
 
-#NOTE: ---------------------------------------------------------------- MENSAJES DE DESCRIPCIÓN DE MÉTRICAS
+#NOTE: ---------------------------------------------------------------- FUNCIÓN DE CREACIÓN DE MÉTRICAS
 #! Función para mostrar las métricas clave
 def cuadritos(df_filtrado, moneda, años):
-
     #!Mensaje mostrando el periodo
     periodo = f"{min(años)} - {max(años)}" if len(años) > 1 else str(años[0])
     st.markdown(
@@ -162,7 +151,6 @@ def cuadritos(df_filtrado, moneda, años):
     precio_minimo = round(df_filtrado["Precio_Minimo"].min(), 4)
     volumen_total = round(df_filtrado["Volumen"].sum(), 2)
     variacion_media = round((df_filtrado["Precio_Cierre"] - df_filtrado["Precio_Apertura"]).mean(), 4)
-
     #! Visualización en pequeños espacios
     col1, col2, col3, col4, col5 = st.columns(5, gap="small")
     #! Espacio 1
@@ -273,32 +261,44 @@ meses_es = {
     'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre'
 }
 
-with col2:    
-    #! Creación de Columnas
-    tabla_cierre = df_filtrado[["Fecha", "Precio_Cierre"]].copy()
+with col2:
+    df_filtrado['Fecha'] = pd.to_datetime(df_filtrado['Fecha'])
+    
+    tabla_cierre = df_filtrado[["Fecha", "Hora", "Precio_Cierre"]].copy()
     tabla_cierre['Fecha'] = pd.to_datetime(tabla_cierre['Fecha'])
+    
+    def timedelta_to_str(td):
+        if pd.isnull(td):
+            return ""
+        total_seconds = int(td.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    tabla_cierre['Hora'] = tabla_cierre['Hora'].apply(timedelta_to_str)
     tabla_cierre['Año'] = tabla_cierre['Fecha'].dt.year
     tabla_cierre['Mes'] = tabla_cierre['Fecha'].dt.month_name().map(meses_es)
-    tabla_cierre = tabla_cierre[['Año', 'Mes', 'Precio_Cierre']]
+    tabla_cierre = tabla_cierre[['Año', 'Mes', 'Hora', 'Precio_Cierre']]
 
-    #! Configurar AgGrid
     gb = GridOptionsBuilder.from_dataframe(tabla_cierre)
     gb.configure_default_column(editable=False, filter=False, sortable=True, resizable=True)
     gb.configure_column("Precio_Cierre", type=["numericColumn", "numberColumnFilter", "customNumericFormat"], precision=2, valueFormatter="x.toLocaleString()")
     gridOptions = gb.build()
 
-    #! Mostrar tabla
     AgGrid(
         tabla_cierre,
         gridOptions=gridOptions,
         enable_enterprise_modules=False,
         fit_columns_on_grid_load=True,
-        allow_unsafe_jscode=True, 
+        allow_unsafe_jscode=True,
         height=450,
         width='100%',
-        theme='material',  
+        theme='material',
         columns_auto_size_mode='FIT_CONTENTS'
     )
+
+
 
 #NOTE: ---------------------------------------------------------------- APARTADO DE ANÁLISIS Y PRONÓSTICO
 #! Separador de Análisis y Pronóstico
@@ -350,7 +350,7 @@ df_moneda = df[df["Moneda"] == filtro_moneda].copy().sort_values("Fecha")
 
 
 #NOTE: ---------------------------------------------------------------- PRONÓSTICO
-# ---------------- SECCIÓN 1: PRONÓSTICO CON PROPHET ----------------
+#! ---------------- SECCIÓN 1: PRONÓSTICO CON PROPHET ----------------
 st.subheader("📈 1. Pronóstico de Precio de Cierre")
 st.markdown("<br>", unsafe_allow_html=True)
 try:
@@ -387,11 +387,9 @@ try:
     st.caption("*Eje X: Fecha proyectada (mes y año). **Eje Y*: Precio de cierre estimado para la moneda seleccionada.")
 
 except Exception as e:
-    st.error(f"⚠ Error al generar el pronóstico: {e}")
+    st.error(f"Error al generar el pronóstico: {e}")
 
-#NOTE: --------------------------------------------------------------- 
 
-import calendar
 
 def RealizarPredicción(forecast, idMoneda): 
     try:
@@ -463,17 +461,14 @@ RealizarPredicción(forecast, int(id_moneda))
 
 
 #NOTE: --------------------------------------------------------------- CLASIFICACIÓN DE INVERSIONES
-#! ---------------- SECCIÓN 2: CLASIFICACIÓN DE INVERSIONES ----------------
 st.subheader("📊 2. Clasificación de Inversión")
 st.markdown("<br>", unsafe_allow_html=True)
-#! ---------------- GRAFICAS EN FILA ----------------
 col_rangos, col_kmeans = st.columns(2)
 #NOTE: ---------------------------------------------------------------- RANGOS FIJOS
 with col_rangos:
     st.markdown("#### A. Clasificación por Rangos Fijos")
     df_moneda["Grupo_Fijo"] = pd.cut(df_moneda["Inversion"], bins=[-float("inf"), 10000, 50000, float("inf")], labels=["Baja", "Media", "Alta"])
     df_fijo_count = df_moneda["Grupo_Fijo"].value_counts().sort_index()
-
     fig_fijo = px.bar(
         df_fijo_count,
         x=df_fijo_count.index,
@@ -484,9 +479,7 @@ with col_rangos:
         color_discrete_map={"Baja": "#a6cee3", "Media": "#1f78b4", "Alta": "#08306b"},
         template="plotly_white"
     )
-    
     fig_fijo.update_layout(yaxis_title="Cantidad de transacciones", xaxis_title="Categoría")
-
     st.plotly_chart(fig_fijo, use_container_width=True)
 
 #NOTE: ---------------------------------------------------------------- AGRUÁCION POR KMEANS
@@ -499,7 +492,6 @@ with col_kmeans:
         kmeans = KMeans(n_clusters=3, random_state=0)
         kmeans.fit(X_scaled)
         df_moneda["Cluster"] = kmeans.labels_
-
         fig2 = px.scatter(
             df_moneda,
             x="Fecha",
@@ -510,6 +502,41 @@ with col_kmeans:
             template="plotly_white"
         )
         st.plotly_chart(fig2, use_container_width=True)
-
     except Exception as e:
         st.error(f"Error al aplicar KMeans: {e}")
+
+#NOTE: ---------------------------------------------------------------- AGRUÁCION Volumen
+
+st.markdown(
+    '<h3 class="titulo-secundario" style="margin-top: 60px;">Evolución Anual del Volumen de Ventas por Criptomoneda</h3>',
+    unsafe_allow_html=True
+)
+
+df_vol_anual = df[
+    (df["Año"] >= filtro_año[0]) &
+    (df["Año"] <= filtro_año[1])
+].copy()
+
+volumen_anual = (
+    df_vol_anual.groupby(["Año", "Moneda"], as_index=False)["Volumen"]
+    .sum()
+)
+
+fig_line_vol_anual = px.line(
+    volumen_anual,
+    x="Año",
+    y="Volumen",
+    color="Moneda",
+    markers=True,
+    title="Volumen anual de ventas por criptomoneda",
+    labels={"Volumen": "Volumen total", "Año": "Año"},
+    template="plotly_white"
+)
+
+fig_line_vol_anual.update_layout(
+    xaxis=dict(dtick=1),
+    legend_title_text="Criptomoneda",
+    hovermode="x unified"
+)
+
+st.plotly_chart(fig_line_vol_anual, use_container_width=True)
