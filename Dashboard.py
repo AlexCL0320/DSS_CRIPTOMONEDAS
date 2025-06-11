@@ -1,4 +1,3 @@
-
 #NOTE: ---------------------------------------------------------------- APARTADO DE IMPORTACIONES
 #! Importaciones principales para la app
 import streamlit as st  # type: ignore
@@ -43,9 +42,12 @@ st.markdown(
     '<h1 class="titulo-principal" style="margin-bottom:60px;">ANÁLISIS Y PREDICCIÓN DE CRIPTOMONEDAS</h1>',
     unsafe_allow_html=True
 )
-
 st.markdown("<br>" * 1, unsafe_allow_html=True)
 
+
+#! Cambiar Contraseñas y Usuario
+Usuario = "root"
+ContraseñaBD = "Ha1Da40318"
 #NOTE: ---------------------------------------------------------------- APARTADO DE OBTENCIÓN DE DATOS
 #! Obtener los datos
 def obtener_datos():
@@ -55,9 +57,9 @@ def obtener_datos():
             #! Se determina al local Host
             host="localhost",
             #! Nombre de Usuario
-            user="root",
+            user=Usuario,
             #! Contraseña
-            password="Ha1Da40318",
+            password=ContraseñaBD,
             database="dss_criptomonedas"
         )
         #! Realizar consulta SQL
@@ -193,7 +195,7 @@ def cuadritos(df_filtrado, moneda, años):
         )
 
 if not df_filtrado.empty:
-    cuadritos(df_filtrado, filtro_moneda, filtro_año)
+        cuadritos(df_filtrado, filtro_moneda, filtro_año)
 else:
     st.warning("No hay datos para mostrar con los filtros seleccionados.")
 
@@ -318,7 +320,7 @@ st.markdown(
 #! Obtención de Datos Específicos para el pronóstico
 @st.cache_data(show_spinner=False)
 def cargar_datos():
-    engine = create_engine("mysql+pymysql://root:Ha1Da40318@localhost/dss_criptomonedas")
+    engine = create_engine(f"mysql+pymysql://{Usuario}:{ContraseñaBD}@localhost/dss_criptomonedas")
     query = """
         SELECT 
             m.Nombre AS Moneda, f.Fecha, t.Precio_Cierre, t.Precio_Apertura, t.Volumen,
